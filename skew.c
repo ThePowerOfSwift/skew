@@ -1,4 +1,5 @@
 #include "skew.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -6,34 +7,35 @@
 #include <highgui.h>
 
 CvMemStorage* storage;
-IplImage *origin, *erode, *canny ,*houghlines, *rotated;
+IplImage *sk_origin, *sk_erode, *sk_canny ,*sk_houghlines, *sk_rotated;
 
 void skewInit()
 {
     storage = cvCreateMemStorage(0);
 #ifdef SKEW_SHOW
-    cvNamedWindow("Origin", CV_WINDOW_NORMAL);
-    cvNamedWindow("Erode", CV_WINDOW_NORMAL);
-    cvNamedWindow("Canny", CV_WINDOW_NORMAL);
+    cvNamedWindow("OriginSkew",  CV_WINDOW_NORMAL);
+    cvNamedWindow("Erode",       CV_WINDOW_NORMAL);
+    cvNamedWindow("Canny",       CV_WINDOW_NORMAL);
     cvNamedWindow("HoughtLines", CV_WINDOW_NORMAL);
-    cvNamedWindow("Rotated", CV_WINDOW_NORMAL);
+    cvNamedWindow("Rotated",     CV_WINDOW_NORMAL);
 #endif
 }
 
 void skew(IplImage *image, int verbose)
 {
     double angle;
-    origin = image;
-    erode = cvCloneImage(image);
-    canny = cvCreateImage(cvGetSize(image), 8, 1);
-    houghlines = cvCreateImage(cvGetSize(image), 8, 3);
-    rotated = cvCloneImage(image);
+    sk_origin = image;
+    sk_erode = cvCloneImage(image);
+    sk_canny = cvCreateImage(cvGetSize(image), 8, 1);
+    sk_houghlines = cvCreateImage(cvGetSize(image), 8, 3);
+    sk_rotated = cvCloneImage(image);
 
-    cvErode(image, erode, NULL, 5);
-    cvCanny(erode, canny, 100, 100, 3);
-    cvCvtColor(canny, houghlines, CV_GRAY2BGR);
+    cvErode(image, sk_erode, NULL, 5);
+    cvCanny(sk_erode, sk_canny, 100, 100, 3);
+    cvCvtColor(sk_canny, sk_houghlines, CV_GRAY2BGR);
 
-    CvSeq *lines = skewGetLines(canny);
+    CvSeq *lines;
+    skewGetLines(sk_canny, &lines);
 
 #ifdef SKEW_SHOW
     skewDrawLines(lines);
@@ -47,14 +49,14 @@ void skew(IplImage *image, int verbose)
 
     CvPoint2D32f center = cvPoint2D32f(image->width / 2, image->height / 2);
 
-    skewRotate(image, rotated, center, angle);
+    skewRotate(image, sk_rotated, center, angle);
 }
 
-CvSeq *skewGetLines(IplImage *canny)
+void skewGetLines(IplImage *canny, CvSeq **lines)
 {
-    CvSeq *lines = 0;
-    lines = cvHoughLines2(canny, storage, CV_HOUGH_PROBABILISTIC, 1, CV_PI/180, 50, 50, 10, 30, 10);
-    return lines;
+
+    *lines = cvHoughLines2(canny, storage, CV_HOUGH_PROBABILISTIC, 1, CV_PI / 180, 50, 50, 10, 30, 10);
+
 }
 
 
@@ -63,7 +65,7 @@ void skewDrawLines(CvSeq *lines)
     int i;
     for (i = 0; i < lines->total; i++){
             CvPoint *line = (CvPoint*)cvGetSeqElem(lines, i);
-            cvLine(houghlines, line[0], line[1], CV_RGB(0,255,0), 1, CV_AA, 0 );
+            cvLine(sk_houghlines, line[0], line[1], CV_RGB(0,255,0), 1, CV_AA, 0 );
     }
 }
 
@@ -120,19 +122,19 @@ void skewRotate(IplImage *src, IplImage *dst, CvPoint2D32f center, double angle)
 void skewEnd()
 {
 #ifdef SKEW_SHOW
-    cvShowImage("Origin", origin);
-    cvShowImage("Erode", erode);
-    cvShowImage("Canny", canny);
-    cvShowImage("HoughtLines", houghlines);
-    cvShowImage("Rotated", rotated);
+    cvShowImage("OriginSkew", sk_origin);
+    cvShowImage("Erode", sk_erode);
+    cvShowImage("Canny", sk_canny);
+    cvShowImage("HoughtLines", sk_houghlines);
+    cvShowImage("Rotated", sk_rotated);
     cvWaitKey(0);
-    cvDestroyWindow("Origin");
+    cvDestroyWindow("OriginSkew");
     cvDestroyWindow("Erode");
     cvDestroyWindow("Canny");
     cvDestroyWindow("HoughtLines");
 #endif
     cvReleaseMemStorage(&storage);
-    cvReleaseImage(&erode);
-    cvReleaseImage(&houghlines);
-    cvReleaseImage(&rotated);
+    cvReleaseImage(&sk_erode);
+    cvReleaseImage(&sk_houghlines);
+    cvReleaseImage(&sk_rotated);
 }

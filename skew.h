@@ -1,13 +1,13 @@
 #include <cv.h>
 #include <highgui.h>
 
-#define SKEW_SHOW 1
+//#define SKEW_SHOW 1
 
 void skewInit();
 
 void skew(IplImage *image, int verbose);
 
-CvSeq *skewGetLines(IplImage *canny);
+void skewGetLines(IplImage *canny, CvSeq **lines);
 
 void skewDrawLines(CvSeq *lines);
 
