@@ -1,2 +1,2 @@
 # skew
-Automatic rotation of scanned documents using OpenCV
+Automatic rotation and contor finding of scanned documents using OpenCV
