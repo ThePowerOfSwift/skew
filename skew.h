@@ -1,22 +1,14 @@
 #include <cv.h>
 #include <highgui.h>
 
-//#define SKEW_SHOW 1
+void skew(IplImage *src, IplImage *dst);
 
-void skewInit();
+void skewGetLines(IplImage *canny, CvMemStorage *storage, CvSeq **lines);
 
-void skew(IplImage *image, int verbose);
+void skewDrawLines(IplImage *src, CvSeq *lines);
 
-void skewGetLines(IplImage *canny, CvSeq **lines);
-
-void skewDrawLines(CvSeq *lines);
-
-int skewCmpAnglesCallback(const void *a, const void *b);
+int _skewCmpAnglesCallback(const void *a, const void *b);
 
 double skewGetAngle(CvSeq* lines);
 
-void skewRotate(IplImage *src, IplImage *dst, CvPoint2D32f center, double angle);
-
-void skewEnd();
-
-
+void skewRotate(IplImage *src, IplImage *dst, double angle);

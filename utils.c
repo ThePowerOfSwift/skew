@@ -3,43 +3,42 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/cvaux.h>
-#include <opencv/cxmisc.h>
 #include <highgui.h>
 
 int countDebugImages = 0;
 
 debugImage *debugImages[MAX_DEBUG_IMAGES];
 
-void debug(IplImage *image, char *imageName, char *moduleName)
-{
-    CV_FUNCNAME("debug");
+void debug(IplImage *src, char *imageName, char *moduleName)
+{    
     debugImage *img;
+
+    CV_FUNCNAME( "debug" );
+
+    __BEGIN__;
+
+    if (!CV_IS_IMAGE( src )) {
+        CV_ERROR( CV_StsBadArg,
+                  "Source must be image");
+    }
 
     CV_ASSERT(countDebugImages <= MAX_DEBUG_IMAGES);
 
-    img = malloc(sizeof(debugImage));
+    CV_CALL( img = (debugImage *)cvAlloc(sizeof(debugImage)) );
 
-    CV_ASSERT(img);
-
-    img->name = malloc(strlen(imageName) +
+    CV_CALL( img->name = (char *)cvAlloc(strlen(imageName) +
                        strlen(moduleName) +
-                       strlen(DEBUG_IMAGENAME_SEPARATOR));
-
-    CV_ASSERT(img->name);
+                       strlen(DEBUG_IMAGENAME_SEPARATOR)) );
 
     strcpy(img->name, moduleName);
     strcat(img->name, DEBUG_IMAGENAME_SEPARATOR);
     strcat(img->name, imageName);
 
-    img->filename = malloc(strlen(DEBUG_OUTPUT_DIR) +
+    CV_CALL( img->filename = (char *)cvAlloc(strlen(DEBUG_OUTPUT_DIR) +
                            strlen(imageName) +
                            strlen(moduleName) +
                            strlen(DEBUG_FILENAME_SEPARATOR) +
-                           strlen(DEBUG_OUTPUT_FILE_EXTENTION) + 1);
-
-    CV_ASSERT(img->filename);
+                           strlen(DEBUG_OUTPUT_FILE_EXTENTION) + 1) );
 
     strcpy(img->filename, DEBUG_OUTPUT_DIR);
     strcat(img->filename, moduleName);
@@ -47,23 +46,25 @@ void debug(IplImage *image, char *imageName, char *moduleName)
     strcat(img->filename, imageName);
     strcat(img->filename, DEBUG_OUTPUT_FILE_EXTENTION);
 
+    CV_CALL( cvSaveImage(img->filename, src, 0) );
+
     debugImages[countDebugImages++] = img;
 
-    CV_ASSERT(cvSaveImage(img->filename, image, 0));
-
-exit:
-    exit(EXIT_FAILURE);
+    __END__;
 }
 
 void debug_run()
 {
-    CV_FUNCNAME("debug");
     debugImage *img;
+
+    CV_FUNCNAME("debug_run");
+
+    __BEGIN__;
+
     for (int i = 0; i < countDebugImages; i++) {
         img = debugImages[i];
-        CV_ASSERT(cvNamedWindow(img->name, CV_WINDOW_NORMAL));
-        img->image = cvLoadImage(img->filename, CV_LOAD_IMAGE_COLOR);
-        CV_ASSERT(img->image);
+        CV_CALL( cvNamedWindow(img->name, CV_WINDOW_NORMAL) );
+        CV_CALL( img->image = cvLoadImage(img->filename, CV_LOAD_IMAGE_COLOR) );
         cvShowImage(img->name, img->image);
     }
 
@@ -76,11 +77,10 @@ void debug_run()
     for (int i = 0; i < countDebugImages; i++ ) {
         img = debugImages[i];
         cvDestroyWindow(img->name);
-        free(img->filename);
-        free(img->name);
         cvReleaseImage(&img->image);
-        free(img);
+        cvFree(&img->filename);
+        cvFree(&img->name);
+        cvFree(&img);
     }
-exit:
-    exit(EXIT_FAILURE);
+    __END__;
 }

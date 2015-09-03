@@ -5,12 +5,12 @@
 
 void contoursInit();
 
-void contoursDrawBorder(IplImage * image);
+void contoursDrawBorder(IplImage *src);
 
-void contoursOutline(IplImage *image, int verbose);
+void contoursOutline(IplImage *src, IplImage *dst);
 
-CvSeq *countorsGet();
+void countorsGet(IplImage *src, CvMemStorage *storage, CvSeq **contours);
 
-void contoursDraw(CvSeq *countors);
+void contoursDraw(IplImage *src, CvSeq *countors);
 
 void contoursEnd();
