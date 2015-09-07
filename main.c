@@ -21,12 +21,12 @@ int main(int argc, char *argv[])
     CV_CALL(image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR));
 
     rotated = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
-    skew(image, rotated);
-#ifdef DEBUG
-    debug(rotated, "Rotated", "Main");
-#endif
+//    skew(image, rotated);
+//#ifdef DEBUG
+//    debug(rotated, "Rotated", "Main");
+//#endif
 
-    contoursOutline(rotated, rotated);
+    contoursOutline(image, rotated);
 #ifdef DEBUG
     debug(rotated, "Countors", "Main");
 #endif

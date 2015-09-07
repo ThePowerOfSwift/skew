@@ -6,25 +6,29 @@
 #include <cv.h>
 #include <highgui.h>
 
+                                                                                      \
+
 void skew(IplImage *src, IplImage *dst)
 {
     double angle;
     IplImage *erode, *canny ,*houghlines, *rotated;
     CvMemStorage* storage;
     CvSeq *lines;
+    CvPoint2D32f center;
 
     CV_FUNCNAME( "skew" );
 
     __BEGIN__;
 
-    if (!CV_IS_IMAGE( src )) {
+    if (!CV_IS_IMAGE( src ))
         CV_ERROR( CV_StsBadArg,
                   "Source must be image");
-    }
 
-    if (!CV_IS_IMAGE( dst )) {
-        CV_ERROR ( CV_StsBadArg, "Destination must be image");
-    }
+
+    if (!CV_IS_IMAGE( dst ))
+        CV_ERROR ( CV_StsBadArg,
+                   "Destination must be image");
+
 
 //    CV_8UC3
 //    int type = cvGetElemType(src);
@@ -62,7 +66,8 @@ void skew(IplImage *src, IplImage *dst)
         printf("angle = %f\n", angle);
 #endif
 
-    skewRotate(src, dst, angle);
+    center = cvPoint2D32f(src->width / 2, src->height / 2);
+    skewRotate(src, dst, center, angle);
 
     __END__;
 
@@ -148,11 +153,19 @@ double skewGetAngle(CvSeq* lines)
     return angle;
 }
 
-void skewRotate(IplImage *src, IplImage *dst, double angle)
+void skewRotate(IplImage *src, IplImage *dst, CvPoint2D32f center, double angle)
 {
     CvMat* m = cvCreateMat(2, 3, CV_32FC1);
-    CvPoint2D32f center = cvPoint2D32f(src->width / 2, src->height / 2);
 
     cv2DRotationMatrix(center, angle, 1, m);
     cvWarpAffine(src, dst, m, CV_INTER_LINEAR + CV_WARP_FILL_OUTLIERS, cvScalarAll(0));
+
+}
+
+void skewDrawRect(IplImage *src, CvPoint2D32f pt[4])
+{
+    SKEW_DRAW_LINE(src, pt[0].x, pt[0].y, pt[1].x, pt[1].y);
+    SKEW_DRAW_LINE(src, pt[1].x, pt[1].y, pt[2].x, pt[2].y);
+    SKEW_DRAW_LINE(src, pt[2].x, pt[2].y, pt[3].x, pt[3].y);
+    SKEW_DRAW_LINE(src, pt[3].x, pt[3].y, pt[0].x, pt[0].y);
 }

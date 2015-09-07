@@ -3,14 +3,10 @@
 
 #define CONTOURS_SHOW 1
 
-void contoursInit();
-
 void contoursDrawBorder(IplImage *src);
 
-void contoursOutline(IplImage *src, IplImage *dst);
+int contoursOutline(IplImage *src, IplImage *dst);
 
-void countorsGet(IplImage *src, CvMemStorage *storage, CvSeq **contours);
+int contoursGet(IplImage *src, CvMemStorage *storage, CvSeq **contours);
 
-void contoursDraw(IplImage *src, CvSeq *countors);
-
-void contoursEnd();
+int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box);

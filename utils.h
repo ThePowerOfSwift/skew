@@ -1,9 +1,8 @@
 #include <cv.h>
 
-#define DEBUG 1
-
 #define __BEGIN__ __CV_BEGIN__
 #define __END__  __CV_END__
+#define __EXIT__ __CV_EXIT__
 
 #define MAX_DEBUG_IMAGES 10
 
