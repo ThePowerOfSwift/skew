@@ -8,6 +8,9 @@
 #include <cv.h>
 #include <highgui.h>
 
+/*
+ * Draw contours
+ */
 void contoursDrawBorder(IplImage *src)
 {
     int border = 5;
@@ -17,13 +20,17 @@ void contoursDrawBorder(IplImage *src)
                 cvScalar(255, 255, 255, 0), border, 8, 0);
 }
 
+/*
+ *  Find Outline
+ */
 int contoursOutline(IplImage *src, IplImage *dst)
 {
     IplImage *gray, *rgb, *bin;
     CvMemStorage *storage;
     CvSeq *contours;
     CvBox2D box;
-    int angle, ret = 0;
+    int ret = 0;
+    float angle;
 
     CV_FUNCNAME( "contoursOutline" );
 
@@ -54,6 +61,7 @@ int contoursOutline(IplImage *src, IplImage *dst)
 #ifdef DEBUG
     debug(bin, "Binary", "Contours");
 #endif
+
     if ((ret = contoursGet(bin, storage, &contours)) <= 0) {
         perror("contoursGet: Contours not found.");
         return -1;
@@ -65,33 +73,20 @@ int contoursOutline(IplImage *src, IplImage *dst)
         return -1;
     }
 
-    double px = box.center.x - (box.size.width / 2);
-    double py = box.center.y - (box.size.height / 2);
+//    if (box.size.width > box.size.height) {
+//        CvMat* m = cvCreateMat(2, 3, CV_32FC1);
 
-    if ((angle = cvRound(box.angle)) != 0) {
-        if (box.size.width > box.size.height) {
-            float t;
-            CV_SWAP(box.size.width, box.size.height, t);
-            angle = angle > 0 ? 90 + angle : angle - 90;
-            px = px - box.center.x;
-            py = py - box.center.y;
-            px = px * cos(angle * CV_PI / 180) - py * sin(angle * CV_PI / 180);
-            py = px * sin(angle * CV_PI / 180) - py * cos(angle * CV_PI / 180);
-            px = px + box.center.x;
-            py = py + box.center.y;
+//    }
 
+     skewRotate(src, dst, box.center, box.angle);
 
-        }
-        skewRotate(src, dst, box.center, angle);
-    }
+     CvRect rect = cvRect(cvRound(box.center.x - (box.size.width / 2)),
+                          cvRound(box.center.y - (box.size.height / 2)),
+                          box.size.width, box.size.height);
 
-    CvRect rect = cvRect(px,
-                         py,
-                         box.size.width, box.size.height);
+     cvSetImageROI(dst, rect);
 
-    cvSetImageROI(dst, rect);
-
-    dst = cvCloneImage(dst);
+     dst = cvCloneImage(dst);
 
     __END__;
 
@@ -140,6 +135,7 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
                   "Contours must be Sequence");
 
     CV_ASSERT ((area = src->width * src->height) > 0);
+
 #ifdef DEBUG
     printf("area=%f\n", area);
 #endif

@@ -6,12 +6,10 @@
 #include <cv.h>
 #include <highgui.h>
 
-                                                                                      \
-
 void skew(IplImage *src, IplImage *dst)
 {
     double angle;
-    IplImage *erode, *canny ,*houghlines, *rotated;
+    IplImage *erode, *canny ,*houghlines;
     CvMemStorage* storage;
     CvSeq *lines;
     CvPoint2D32f center;
@@ -86,8 +84,7 @@ void skewGetLines(IplImage *canny, CvMemStorage* storage, CvSeq **lines)
 
 void skewDrawLines(IplImage *src, CvSeq *lines)
 {
-    int i;
-    for (i = 0; i < lines->total; i++){
+    for (int i = 0; i < lines->total; i++){
             CvPoint *line = (CvPoint*)cvGetSeqElem(lines, i);
             cvLine(src, line[0], line[1], CV_RGB(0,255,0), 1, CV_AA, 0 );
     }
@@ -95,8 +92,8 @@ void skewDrawLines(IplImage *src, CvSeq *lines)
 
 int _skewCmpAnglesCallback(const void *a, const void *b)
 {
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
+    const double *da = (const double *)a;
+    const double *db = (const double *)b;
 
     return CV_CMP(*da, *db);
 }
