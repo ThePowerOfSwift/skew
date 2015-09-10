@@ -59,7 +59,6 @@ int contoursGetOutline(IplImage *src, IplImage *dst)
     cvCvtColor(bin, rgb, CV_GRAY2RGB);
     MORPH(rgb, rgb, CV_MOP_CLOSE, 9, 1);
 
-
     cvCvtColor(rgb, bin, CV_RGB2GRAY);
 
 #ifdef DEBUG
@@ -68,13 +67,15 @@ int contoursGetOutline(IplImage *src, IplImage *dst)
 
     if ((ret = contoursGet(bin, storage, &contours)) <= 0) {
         perror("contoursGet: Contours not found.");
-        return -1;
+        ret = 1;
+        __EXIT__;
     }
 
     memset(&box, 0, sizeof(CvBox2D));
     if ((contorsFindBox(src, contours, &box)) != 0) {
-        perror("contoursGet: Box not found.");
-        return -1;
+        perror("contoursFindBox: Box not found.");
+        ret = 1;
+        __EXIT__;
     }
 
     skewRotate(src, src, box.center, box.angle);

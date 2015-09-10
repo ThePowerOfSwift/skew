@@ -37,19 +37,19 @@ void skew(IplImage *src, IplImage *dst)
     canny      = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
     houghlines = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
 
-    CV_CALL( cvErode(src, erode, NULL, 5) );
+    cvErode(src, erode, NULL, 5);
 
 #ifdef DEBUG
     debug(erode, "Erode", "Skew");
 #endif
 
-    CV_CALL( cvCanny(erode, canny, 100, 100, 3));
+    cvCanny(erode, canny, 100, 100, 3);
 
 #ifdef DEBUG
     debug(erode, "Canny", "Skew");
 #endif
 
-    CV_CALL( cvCvtColor(canny, houghlines, CV_GRAY2BGR) );
+    cvCvtColor(canny, houghlines, CV_GRAY2BGR);
 
     skewGetLines(canny, storage, &lines);
 

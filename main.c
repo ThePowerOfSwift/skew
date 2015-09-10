@@ -15,7 +15,6 @@ extern IplImage *morph_temp;
 int main(int argc, char *argv[])
 {
     IplImage *image, *rotated;
-    char *filepath, *filename, output_dir[] = "/tmp/";
 
     CV_FUNCNAME("main");
 
@@ -26,8 +25,8 @@ int main(int argc, char *argv[])
     CV_CALL(image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR));
 //    templMatching(image);
     rotated = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
-////    skew(image, rotated);
-////    debug(rotated, "Rotated", "Main");
+//    skew(image, rotated);
+//    debug(rotated, "Rotated", "Main");
 
     contoursGetOutline(image, rotated);
     debug(rotated, "Rotated", "Main");
