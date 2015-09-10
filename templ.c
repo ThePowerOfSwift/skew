@@ -127,7 +127,4 @@ void templMatching(IplImage *src)
 #ifdef DEBUG
     debug(diff, "sub2", "templ");
 #endif
-
-
-
 }

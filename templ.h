@@ -9,6 +9,15 @@
 
 #define TEMPLATE2 "template2.jpg"
 
+#define TPL_1_NORMAL 0
+
+#define TPL_1_180 1
+
+#define TPL_2_NORMAL 2
+
+#define TPL_2_180 3
+
+
 void templMatching(IplImage *src);
 
 IplImage *templCreateTempl(char *dir, char *files[], char *filename, int filesc);

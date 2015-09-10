@@ -19,13 +19,10 @@ void skew(IplImage *src, IplImage *dst)
     __BEGIN__;
 
     if (!CV_IS_IMAGE( src ))
-        CV_ERROR( CV_StsBadArg,
-                  "Source must be image");
-
+        CV_ERROR( CV_StsBadArg, "Source must be image");
 
     if (!CV_IS_IMAGE( dst ))
-        CV_ERROR ( CV_StsBadArg,
-                   "Destination must be image");
+        CV_ERROR ( CV_StsBadArg, "Destination must be image");
 
 
 //    CV_8UC3

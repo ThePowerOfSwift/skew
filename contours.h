@@ -9,7 +9,7 @@ void contoursDrawBorder(IplImage *src);
 /*
  *  Find Outline
  */
-int contoursGetOutline(IplImage *src, IplImage *dst);
+int contoursGetOutline(IplImage *src, IplImage **dst);
 
 CvRect contoursGetRect(CvBox2D *box);
 

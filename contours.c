@@ -27,7 +27,7 @@ CvRect contoursGetRect(CvBox2D *box)
     return rect;
 }
 
-int contoursGetOutline(IplImage *src, IplImage *dst)
+int contoursGetOutline(IplImage *src, IplImage **dst)
 {
     IplImage *t, *rgb, *bin, *crop;
     CvMemStorage *storage;
@@ -99,7 +99,7 @@ int contoursGetOutline(IplImage *src, IplImage *dst)
 #ifdef DEBUG
         debug(rotated, "Rotated", "contours");
 #endif
-
+        *dst = cvCloneImage(rotated);
         cvReleaseImage(&rotated);
     }
 

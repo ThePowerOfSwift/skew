@@ -24,11 +24,11 @@ int main(int argc, char *argv[])
 
     CV_CALL(image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR));
 //    templMatching(image);
-    rotated = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
+
 //    skew(image, rotated);
 //    debug(rotated, "Rotated", "Main");
 
-    contoursGetOutline(image, rotated);
+    contoursGetOutline(image, &rotated);
     debug(rotated, "Rotated", "Main");
 
     debug_run();
@@ -45,11 +45,10 @@ int main(int argc, char *argv[])
         printf("filename = %s\n", filename);
 
         CV_CALL(image = cvLoadImage(argv[i], CV_LOAD_IMAGE_COLOR));
-        rotated = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
 
-        contoursOutline(image, rotated);
+        contoursOutline(image, &rotated);
 
-        cvSaveImage(filepath, rotated, 0);
+        CV_CALL(cvSaveImage(filepath, rotated, 0));
         free(filepath);
 //        free(filename);
 
@@ -58,7 +57,5 @@ int main(int argc, char *argv[])
     }
 #endif
     __END__;
-
-
 }
 
