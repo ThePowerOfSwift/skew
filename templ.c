@@ -107,8 +107,8 @@ void templMatching(IplImage *src)
     templ1 = templGet(TEMPLATE1,
                      (char *[]){"1.jpg", "2.jpg", "4.jpg", "9.jpg"},
                                     4);
-    image = cvCreateImage(cvSize(templ1->width, templ1->height), IPL_DEPTH_8U, 3);
-    diff = cvCreateImage(cvSize(templ1->width, templ1->height), IPL_DEPTH_8U, 3);
+    image = cvCreateImage(cvGetSize(templ1), IPL_DEPTH_8U, 3);
+    diff = cvCreateImage(cvGetSize(templ1), IPL_DEPTH_8U, 3);
 
     cvResize(src, image, CV_INTER_LINEAR);
     cvSmooth(image, image, CV_MEDIAN, 31, 31, 0, 0);

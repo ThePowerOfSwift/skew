@@ -8,29 +8,32 @@
 #include <cv.h>
 #include <highgui.h>
 
-/*
- * Draw contours
- */
 void contoursDrawBorder(IplImage *src)
 {
     int border = 5;
-    cvRectangle(src,
-                cvPoint(0, 0),
-                cvPoint(src->width - border, src->height - border),
+    cvRectangle(src, cvPoint(0, 0), cvPoint(src->width - border, src->height - border),
                 cvScalar(255, 255, 255, 0), border, 8, 0);
 }
 
-/*
- *  Find Outline
- */
-int contoursOutline(IplImage *src, IplImage *dst)
+CvRect contoursGetRect(CvBox2D *box)
 {
-    IplImage *gray, *rgb, *bin;
+    CvRect rect;
+    rect = cvRect(cvRound(box->center.x - (box->size.width / 2)),
+                         cvRound(box->center.y - (box->size.height / 2)),
+                         box->size.width, box->size.height);
+
+    // refactor this: if box->size.width > box->size.height
+
+    return rect;
+}
+
+int contoursGetOutline(IplImage *src, IplImage *dst)
+{
+    IplImage *t, *rgb, *bin, *crop;
     CvMemStorage *storage;
     CvSeq *contours;
     CvBox2D box;
     int ret = 0;
-    float angle;
 
     CV_FUNCNAME( "contoursOutline" );
 
@@ -38,23 +41,24 @@ int contoursOutline(IplImage *src, IplImage *dst)
 
     CV_CALL( storage = cvCreateMemStorage(0) );
 
-    gray = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+    t    = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
     bin  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
     rgb  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
 
     contoursDrawBorder(src);
 
-    cvCvtColor(src, gray, CV_RGB2GRAY);
-    cvAdaptiveThreshold(gray, bin, 250, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
+    cvCvtColor(src, bin, CV_RGB2GRAY);
+    cvAdaptiveThreshold(bin, bin, 250, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
 
     cvCvtColor(bin, rgb, CV_GRAY2RGB);
     MORPH(rgb, rgb, CV_MOP_OPEN, 3, 1);
 
-    cvCvtColor(rgb, gray, CV_RGB2GRAY);
-    cvThreshold(gray, bin, 195, 255, CV_THRESH_BINARY);
+    cvCvtColor(rgb, bin, CV_RGB2GRAY);
+    cvThreshold(bin, bin, 195, 255, CV_THRESH_BINARY);
 
     cvCvtColor(bin, rgb, CV_GRAY2RGB);
     MORPH(rgb, rgb, CV_MOP_CLOSE, 9, 1);
+
 
     cvCvtColor(rgb, bin, CV_RGB2GRAY);
 
@@ -73,22 +77,37 @@ int contoursOutline(IplImage *src, IplImage *dst)
         return -1;
     }
 
-//    if (box.size.width > box.size.height) {
-//        CvMat* m = cvCreateMat(2, 3, CV_32FC1);
+    skewRotate(src, src, box.center, box.angle);
 
-//    }
+    CvRect rect = contoursGetRect(&box);
+    cvSetImageROI(src, rect);
+    crop = cvCreateImage(cvGetSize(src), src->depth, src->nChannels);
+    cvCopy(src, crop, NULL);
+    cvResetImageROI(src);
 
-     skewRotate(src, dst, box.center, box.angle);
+#ifdef DEBUG
+    debug(crop, "Crop", "Contour");
+#endif
 
-     CvRect rect = cvRect(cvRound(box.center.x - (box.size.width / 2)),
-                          cvRound(box.center.y - (box.size.height / 2)),
-                          box.size.width, box.size.height);
+    // delete this before refactor contoursGetRect()
+    if (crop->width > crop->height) {
+        IplImage *rotated = cvCreateImage(cvSize(crop->height, crop->width), crop->depth, crop->nChannels);
+        cvTranspose(crop, rotated);
+        cvFlip(rotated, rotated, -1);
 
-     cvSetImageROI(dst, rect);
+#ifdef DEBUG
+        debug(rotated, "Rotated", "contours");
+#endif
 
-     dst = cvCloneImage(dst);
+        cvReleaseImage(&rotated);
+    }
 
     __END__;
+
+    cvReleaseImage(&t);
+    cvReleaseImage(&rgb);
+    cvReleaseImage(&bin);
+    cvReleaseImage(&crop);
 
     return ret;
 }
@@ -96,17 +115,16 @@ int contoursOutline(IplImage *src, IplImage *dst)
 int contoursGet(IplImage *src, CvMemStorage* storage, CvSeq **contours)
 {
     int ret = 0;
+
     CV_FUNCNAME( "countorsGet" );
 
     __BEGIN__;
 
     if (!CV_IS_IMAGE( src ))
-            CV_ERROR( CV_StsBadArg,
-                  "Source must be image");
+            CV_ERROR( CV_StsBadArg, "Source must be image");
 
     if (!CV_IS_STORAGE( storage ))
-            CV_ERROR( CV_StsBadArg,
-                      "Storage must be Memory storage");
+            CV_ERROR( CV_StsBadArg, "Storage must be Memory storage");
 
     ret = cvFindContours(src, storage,
                           contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0, 0));
@@ -127,12 +145,10 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
     __BEGIN__;
 
     if (!CV_IS_IMAGE( src ))
-        CV_ERROR( CV_StsBadArg,
-                  "Source must be image");
+        CV_ERROR( CV_StsBadArg, "Source must be image");
 
     if (!CV_IS_SEQ( contours ))
-        CV_ERROR( CV_StsBadArg,
-                  "Contours must be Sequence");
+        CV_ERROR( CV_StsBadArg, "Contours must be Sequence");
 
     CV_ASSERT ((area = src->width * src->height) > 0);
 
@@ -171,6 +187,7 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
         printf("contour_area=%f\n", contour_area);
 #endif
     }
+
     __END__;
 
     return ret;

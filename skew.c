@@ -157,6 +157,7 @@ void skewRotate(IplImage *src, IplImage *dst, CvPoint2D32f center, double angle)
     cv2DRotationMatrix(center, angle, 1, m);
     cvWarpAffine(src, dst, m, CV_INTER_LINEAR + CV_WARP_FILL_OUTLIERS, cvScalarAll(0));
 
+    cvReleaseMat(&m);
 }
 
 void skewDrawRect(IplImage *src, CvPoint2D32f pt[4])

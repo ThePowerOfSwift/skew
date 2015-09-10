@@ -24,18 +24,18 @@ int main(int argc, char *argv[])
 #ifdef DEBUG
 
     CV_CALL(image = cvLoadImage(argv[1], CV_LOAD_IMAGE_COLOR));
-    templMatching(image);
-//    rotated = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
+//    templMatching(image);
+    rotated = cvCreateImage(cvGetSize(image), IPL_DEPTH_8U, 3);
 ////    skew(image, rotated);
 ////    debug(rotated, "Rotated", "Main");
 
-//    contoursOutline(image, rotated);
-//    debug(rotated, "Countors", "Main");
+    contoursGetOutline(image, rotated);
+    debug(rotated, "Rotated", "Main");
 
     debug_run();
 
-//    cvReleaseImage(&image);
-//    cvReleaseImage(&rotated);
+    cvReleaseImage(&image);
+    cvReleaseImage(&rotated);
 #else
     for (int i = 1; i < argc; i++) {
         filename = basename(argv[i]);

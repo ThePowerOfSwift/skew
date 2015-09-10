@@ -1,11 +1,17 @@
 #include <cv.h>
 #include <highgui.h>
 
-#define CONTOURS_SHOW 1
-
+/*
+ * Draw contour
+ */
 void contoursDrawBorder(IplImage *src);
 
-int contoursOutline(IplImage *src, IplImage *dst);
+/*
+ *  Find Outline
+ */
+int contoursGetOutline(IplImage *src, IplImage *dst);
+
+CvRect contoursGetRect(CvBox2D *box);
 
 int contoursGet(IplImage *src, CvMemStorage *storage, CvSeq **contours);
 
