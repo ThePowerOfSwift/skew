@@ -29,7 +29,7 @@ CvRect contoursGetRect(CvBox2D *box)
 
 int contoursGetOutline(IplImage *src, IplImage **dst)
 {
-    IplImage *t, *rgb, *bin, *crop;
+    IplImage *t3, *t1, *rgb, *bin, *crop, *rotated;
     CvMemStorage *storage;
     CvSeq *contours;
     CvBox2D box;
@@ -41,28 +41,29 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
 
     CV_CALL( storage = cvCreateMemStorage(0) );
 
-    t    = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
-    bin  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
-    rgb  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
+    bin = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+    rgb = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
+    t3  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
+    t1  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
 
     contoursDrawBorder(src);
 
     cvCvtColor(src, bin, CV_RGB2GRAY);
-    cvAdaptiveThreshold(bin, bin, 250, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
+    cvAdaptiveThreshold(bin, t1, 250, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
 
-    cvCvtColor(bin, rgb, CV_GRAY2RGB);
-    MORPH(rgb, rgb, CV_MOP_OPEN, 3, 1);
+    cvCvtColor(t1, rgb, CV_GRAY2RGB);
+    MORPH(rgb, t3, CV_MOP_OPEN, 3, 1);
 
-    cvCvtColor(rgb, bin, CV_RGB2GRAY);
-    cvThreshold(bin, bin, 195, 255, CV_THRESH_BINARY);
+    cvCvtColor(t3, bin, CV_RGB2GRAY);
+    cvThreshold(bin, t1, 195, 255, CV_THRESH_BINARY);
 
-    cvCvtColor(bin, rgb, CV_GRAY2RGB);
-    MORPH(rgb, rgb, CV_MOP_CLOSE, 9, 1);
+    cvCvtColor(t1, rgb, CV_GRAY2RGB);
+    MORPH(rgb, t3, CV_MOP_CLOSE, 9, 1);
 
-    cvCvtColor(rgb, bin, CV_RGB2GRAY);
+    cvCvtColor(t3, bin, CV_RGB2GRAY);
 
 #ifdef DEBUG
-    debug(bin, "Binary", "Contours");
+//    debug(bin, "Binary", "Contours");
 #endif
 
     if ((ret = contoursGet(bin, storage, &contours)) <= 0) {
@@ -78,37 +79,46 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
         __EXIT__;
     }
 
-    skewRotate(src, src, box.center, box.angle);
+    rotated = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
+    skewRotate(src, rotated, box.center, box.angle);
+#ifdef DEBUG
+//    debug(rotated, "rotated", "contours", NULL);
+#endif
 
     CvRect rect = contoursGetRect(&box);
-    cvSetImageROI(src, rect);
-    crop = cvCreateImage(cvGetSize(src), src->depth, src->nChannels);
-    cvCopy(src, crop, NULL);
-    cvResetImageROI(src);
+    cvSetImageROI(rotated, rect);
+    crop = cvCreateImage(cvGetSize(rotated), IPL_DEPTH_8U, 3);
+    cvCopy(rotated, crop, NULL);
+    cvResetImageROI(rotated);
 
 #ifdef DEBUG
-    debug(crop, "Crop", "Contour");
+//    debug(crop, "Crop", "Contour");
 #endif
 
     // delete this before refactor contoursGetRect()
     if (crop->width > crop->height) {
-        IplImage *rotated = cvCreateImage(cvSize(crop->height, crop->width), crop->depth, crop->nChannels);
+        cvReleaseImage(&rotated);
+        rotated = cvCreateImage(cvSize(crop->height, crop->width), crop->depth, crop->nChannels);
         cvTranspose(crop, rotated);
-        cvFlip(rotated, rotated, -1);
+        cvFlip(rotated, rotated, 1);
 
 #ifdef DEBUG
-        debug(rotated, "Rotated", "contours");
+//        debug(rotated, "Rotated", "contours");
 #endif
         *dst = cvCloneImage(rotated);
         cvReleaseImage(&rotated);
+    } else {
+        *dst = cvCloneImage(crop);
     }
 
     __END__;
 
-    cvReleaseImage(&t);
+    cvReleaseImage(&t3);
+    cvReleaseImage(&t1);
     cvReleaseImage(&rgb);
     cvReleaseImage(&bin);
     cvReleaseImage(&crop);
+    cvReleaseMemStorage(&storage);
 
     return ret;
 }
@@ -171,14 +181,14 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
 //#endif
 
 #ifdef DEBUG
-            double px = b.center.x - (b.size.width / 2);
-            double py = b.center.y - (b.size.height / 2);
-            IplImage  *_src = cvCloneImage(src);
-            SKEW_DRAW_LINE(_src, px, py, b.center.x, b.center.y);
-            CvRect rect = cvRect(cvRound(px), cvRound(py), b.size.width, b.size.height);
-            cvRectangleR(_src, rect, cvScalar(0, 0, 255, 0), 2, 8, 0);
-            debug(_src, "contorsGetRect", "Contours");
-            cvReleaseImage(&_src);
+//            double px = b.center.x - (b.size.width / 2);
+//            double py = b.center.y - (b.size.height / 2);
+//            IplImage  *_src = cvCloneImage(src);
+//            SKEW_DRAW_LINE(_src, px, py, b.center.x, b.center.y);
+//            CvRect rect = cvRect(cvRound(px), cvRound(py), b.size.width, b.size.height);
+//            cvRectangleR(_src, rect, cvScalar(0, 0, 255, 0), 2, 8, 0);
+//            debug(_src, "contorsGetRect", "Contours");
+//            cvReleaseImage(&_src);
 #endif
             ret = 0;
             __EXIT__;

@@ -37,13 +37,13 @@ void skew(IplImage *src, IplImage *dst)
     cvErode(src, erode, NULL, 5);
 
 #ifdef DEBUG
-    debug(erode, "Erode", "Skew");
+    debug(erode, "Erode", "Skew", NULL);
 #endif
 
     cvCanny(erode, canny, 100, 100, 3);
 
 #ifdef DEBUG
-    debug(erode, "Canny", "Skew");
+    debug(erode, "Canny", "Skew", NULL);
 #endif
 
     cvCvtColor(canny, houghlines, CV_GRAY2BGR);
@@ -52,7 +52,7 @@ void skew(IplImage *src, IplImage *dst)
 
 #ifdef DEBUG
     skewDrawLines(houghlines, lines);
-    debug(houghlines, "Houghlines", "Skew");
+    debug(houghlines, "Houghlines", "Skew", NULL);
 #endif
 
     angle = skewGetAngle(lines);
@@ -152,7 +152,7 @@ void skewRotate(IplImage *src, IplImage *dst, CvPoint2D32f center, double angle)
     CvMat* m = cvCreateMat(2, 3, CV_32FC1);
 
     cv2DRotationMatrix(center, angle, 1, m);
-    cvWarpAffine(src, dst, m, CV_INTER_LINEAR + CV_WARP_FILL_OUTLIERS, cvScalarAll(0));
+    cvWarpAffine(src, dst, m, CV_INTER_LINEAR, cvScalarAll(0));
 
     cvReleaseMat(&m);
 }

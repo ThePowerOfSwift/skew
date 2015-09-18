@@ -4,6 +4,9 @@
 #define __END__  __CV_END__
 #define __EXIT__ __CV_EXIT__
 
+#define cvQueryHistValue_1D( hist, idx0 ) \
+    ((float)cvGetReal1D( (hist)->bins, (idx0)))
+
 #define MAX_DEBUG_IMAGES 10
 
 #define DEBUG_OUTPUT_DIR "/tmp/"
@@ -13,6 +16,14 @@
 #define DEBUG_IMAGENAME_SEPARATOR ":"
 
 #define DEBUG_OUTPUT_FILE_EXTENTION ".jpg"
+
+#define DEBUG_HIST_WINDOW_TITLE "Hist"
+
+#define DEBUG_HIST_WINDOW_TITLE_RED "red"
+
+#define DEBUG_HIST_WINDOW_TITLE_GREEN "green"
+
+#define DEBUG_HIST_WINDOW_TITLE_BLUE "blue"
 
 #define MORPH(src, dst, operation, radius, iterations) {                                 \
     int  cols = radius * 2 + 1,                                                          \
@@ -25,14 +36,26 @@
                                                 CV_SHAPE_ELLIPSE, NULL) );               \
     cvMorphologyEx(src, dst, temp, kern, operation, iterations);                         \
     cvReleaseImage(&temp);                                                               \
+    cvReleaseStructuringElement(&kern);                                                  \
 };                                                                                       \
 
+typedef struct {
+    IplImage *r;
+    IplImage *g;
+    IplImage *b;
+} debugHist;
+
 typedef struct{
-    IplImage *image;
-    char     *name;
-    char     *filename;
+    IplImage  *image;
+    char      *title;
+    char      *filename;
+    int       drawHist;
+    char      *titleHist[4];
+    debugHist *hist;
 } debugImage;
 
-void debug(IplImage *src, char *imageName, char *moduleName);
+void debug(IplImage *src, char *imageName, char *moduleName, int drawHist);
 
 void debug_run();
+
+IplImage *drawHistogram(CvHistogram *histogram, float scaleX, float scaleY);

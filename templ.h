@@ -18,7 +18,7 @@
 #define TPL_2_180 3
 
 
-void templMatching(IplImage *src);
+void templatesMatching(IplImage *src);
 
 IplImage *templCreateTempl(char *dir, char *files[], char *filename, int filesc);
 
