@@ -8,35 +8,7 @@
 #include <alloca.h>
 #include <stdio.h>
 
-
-IplImage *cross_correlation( IplImage *img, IplImage *templ )
-{
-  // Zero-pad "img->
-  IplImage *paddedImg = cvCreateImage( cvSize( img->width*2-1, img->height*2-1 ), img->depth, img->nChannels );
-  cvSet( paddedImg, cvScalar( 0,0,0,0 ), NULL );
-  // TODO: Will break on odd-sized images
-  CvRect roi = cvRect( img->width/2, img->height/2, img->width, img->height );
-  cvSetImageROI( paddedImg, roi );
-  cvCopy( img, paddedImg, NULL );
-  cvResetImageROI( paddedImg );
-
-  IplImage *result = cvCreateImage(cvGetSize(img), 32, 1);
-
-//  printf("Result size %d,%d\n", result->cols, result->rows );
-//  printf("Img size    %d,%d\n", img->width, img->height );
-//  printf("Templ size  %d,%d\n", templ->width, templ->height );
-//  printf("Padded size %d,%d\n", paddedImg->width, paddedImg->height );
-
-//  assert( result->cols == ( abs(paddedImg->width - templ->width) + 1 ) );
-//  assert( result->rows == ( abs(paddedImg->height - templ->height) + 1 ) );
-
-  cvMatchTemplate( paddedImg, templ, result, CV_TM_CCORR_NORMED );
-  cvReleaseImage(&paddedImg);
-
-  return result;
-}
-
-CvRect templFind(IplImage *src, IplImage *templ, int type)
+CvRect templCrossCorrelation(IplImage *src, IplImage *templ, int type)
 {
     CvRect roi = cvRect(0, templ->height/2, templ->width/2, templ->height/2);
     IplImage *t = cvCreateImage(cvSize(roi.width, roi.height), templ->depth, templ->nChannels);
@@ -110,7 +82,7 @@ IplImage *templCreateTempl(char *dir, char *files[], char *filename, int filesc)
     // get template
     templ = images[0];
     for (i = 1; i < filesc; i++) {
-        CvRect rect = templFind(images[i], templ, 2);
+        CvRect rect = templCrossCorrelation(images[i], templ, 2);
 //        cvRectangleR(images[i], rect, CV_RGB(255, 0, 0), 1, 8, 0);
 
         cvSetImageROI(images[i], rect);
@@ -188,14 +160,14 @@ void templTempl()
     IplImage *src1  = cvLoadImage("/home/andrei/img/pas/templ1/37.jpg", CV_LOAD_IMAGE_COLOR);
     IplImage *templ = cvLoadImage("/home/andrei/img/pas/templ1/0.png",  CV_LOAD_IMAGE_COLOR);
 
-    CvRect rect = templFind(src, templ, 2);
+    CvRect rect = templCrossCorrelation(src, templ, 2);
     cvRectangleR(src, rect, CV_RGB(255, 0, 0), 1, 8, 0);
     cvSetImageROI(src, rect);
     IplImage *img = cvCreateImage(cvSize(rect.width, rect.height), src->depth, src->nChannels);
     cvCopy(src, img, NULL);
 
 
-    CvRect rect1 = templFind(src1, templ, 2);
+    CvRect rect1 = templCrossCorrelation(src1, templ, 2);
     cvRectangleR(src1, rect1, CV_RGB(255, 0, 0), 1, 8, 0);
     cvSetImageROI(src1, rect1);
     IplImage *img1 = cvCreateImage(cvSize(rect1.width, rect1.height), src1->depth, src1->nChannels);
@@ -210,18 +182,52 @@ void templTempl()
 
 }
 
-int templatesMatching2(IplImage *src)
+int templateValidate(IplImage *src, IplImage *templ1, IplImage *templ2)
 {
-    IplImage *templ1, *templ2, *imgResized1, *imgResized2;
+    int ret = 0;
 
-    int ret = -1;
+    CvRect r1 = templCrossCorrelation(src, templ1, 1);
+    CvRect r2 = templCrossCorrelation(src, templ2, 1);
 
-    templ1 = templGet(TEMPLATE1,
-                     (char *[]){"0.png", "1.jpg", "2.jpg", "25.jpg", "37.jpg"},
-                     5);
-    templ2 = templGet(TEMPLATE2,
-                      (char *[]){"0.png", "30.jpg", "34.jpg", "38.jpg", "42.jpg"},
-                      5);
+#ifdef DEBUG
+    cvRectangleR(src, r1, CV_RGB(255, 0, 0), 1, 8, 0);
+    cvRectangleR(src, r2, CV_RGB(0, 255, 0), 1, 8, 0);
+    cvLine(src, cvPoint(src->width / 2, 0), cvPoint(src->width / 2, src->height), CV_RGB(0, 0, 255), 1, 8, 0);
+    cvLine(src, cvPoint(0, src->height / 2), cvPoint(src->width, src->height / 2), CV_RGB(0, 0, 255), 1, 8, 0);
+#endif
+
+    int min_y = src->height / 2 - r1.height / 2;
+    int max_x = src->width / 4;
+
+    if (r1.y > min_y && r1.x < max_x) {
+        ret |= TPL_1_NORMAL;
+        printf("%d %d ", r1.x, r1.y);
+    }
+
+    min_y = src->height / 2 - r2.height / 2;
+
+    if (r2.y > min_y && r2.x < max_x) {
+        ret |= TPL_2_NORMAL;
+        printf("%d %d ", r2.x, r2.y);
+    }
+
+    if (ret == (TPL_1_NORMAL | TPL_2_NORMAL)) {
+        if (r1.y > r2.y) {
+            ret = TPL_1_NORMAL;
+        } else {
+            ret = TPL_2_NORMAL;
+        }
+    }
+
+    return ret;
+}
+
+int templatesMatching2(IplImage *src, IplImage *templ1, IplImage *templ2)
+{
+
+    int ret = 0;
+
+
 
 //    cvSmooth(templ1, templ1, CV_MEDIAN, 31, 31, 0, 0);
 //    cvSmooth(templ2, templ2, CV_MEDIAN, 31, 31, 0, 0);
@@ -229,10 +235,10 @@ int templatesMatching2(IplImage *src)
 //    cvSmooth(src, t, CV_MEDIAN, 31, 31, 0, 0);
 
 
-    imgResized1 = cvCreateImage(cvGetSize(templ1), src->depth, src->nChannels);
-    imgResized2 = cvCreateImage(cvGetSize(templ2), src->depth, src->nChannels);
-    cvResize(src, imgResized1, CV_INTER_LINEAR);
-    cvResize(src, imgResized2, CV_INTER_LINEAR);
+//    imgResized1 = cvCreateImage(cvGetSize(templ1), src->depth, src->nChannels);
+//    imgResized2 = cvCreateImage(cvGetSize(templ2), src->depth, src->nChannels);
+//    cvResize(src, imgResized1, CV_INTER_LINEAR);
+//    cvResize(src, imgResized2, CV_INTER_LINEAR);
 
 //    double min_val[4], max_val;
 //    CvPoint min_loc, max_loc;
@@ -253,23 +259,14 @@ int templatesMatching2(IplImage *src)
 //        ret = TPL_2_NORMAL;
 //    }
 
-    CvRect r1 = templFind(imgResized1, templ1, 1);
-    cvRectangleR(src, r1, CV_RGB(255, 0, 0), 1, 8, 0);
-
-    CvRect r2 = templFind(imgResized2, templ2, 1);
-    cvRectangleR(src, r2, CV_RGB(0, 255, 0), 1, 8, 0);
-
-    cvLine(src, cvPoint(src->width / 2, 0), cvPoint(src->width / 2, src->height), CV_RGB(0, 0, 255), 1, 8, 0);
-
-    cvLine(src, cvPoint(0, src->height / 2), cvPoint(src->width, src->height / 2), CV_RGB(0, 0, 255), 1, 8, 0);
-
-    if (r1.x < (templ1->width / 2) && (r1.y + templ1->height / 2) > r1.y && r1.y > r2.y) {
-        ret = TPL_1_NORMAL;
+    if ((ret = templateValidate(src, templ1, templ2)) == 0) {
+        skewRotate(src, src, cvPoint2D32f(src->width / 2, src->height / 2), 180.0);
+        ret = templateValidate(src, templ1, templ2);
     }
 
-    if (r2.x < (templ2->width / 2) && (r2.y + templ2->height / 2) > r2.y && r2.y > r1.y) {
-        ret = TPL_2_NORMAL;
-    }
+//    if (r2.x < (templ2->width / 2) && (r2.y + templ2->height / 2) > r2.y && r2.y > r1.y) {
+//        ret = TPL_2_NORMAL;
+//    }
 
 
 //    CvScalar avg[4];
@@ -292,13 +289,6 @@ int templatesMatching2(IplImage *src)
 //    debug(cor1, "cor1", "templ", NULL);
 #endif
 
-    cvReleaseImage(&templ1);
-    cvReleaseImage(&templ2);
-    cvReleaseImage(&imgResized1);
-    cvReleaseImage(&imgResized2);
-//    cvReleaseImage(&cor1);
-//    cvReleaseImage(&cor2);
-//    cvReleaseImage(&src);
 
     return ret;
 }

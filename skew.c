@@ -58,7 +58,7 @@ void skew(IplImage *src, IplImage *dst)
     angle = skewGetAngle(lines);
 
 #ifdef DEBUG
-        printf("angle = %f\n", angle);
+//        printf("angle = %f\n", angle);
 #endif
 
     center = cvPoint2D32f(src->width / 2, src->height / 2);
@@ -125,7 +125,7 @@ double skewGetAngle(CvSeq* lines)
     for (i = 0; i < lines->total; i++) {
 
 #ifdef DEBUG
-        printf("angle: %f\n", angles[i]);
+//        printf("angle: %f\n", angles[i]);
 #endif
         for (j = i, c = 0; j < lines->total; j++) {
 

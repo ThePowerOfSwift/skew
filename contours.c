@@ -164,7 +164,7 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
     CV_ASSERT ((area = src->width * src->height) > 0);
 
 #ifdef DEBUG
-    printf("area=%f\n", area);
+//    printf("area=%f\n", area);
 #endif
 
     for (CvSeq *c = contours; c != NULL; c = c->h_next) {
@@ -195,7 +195,7 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
         }
 
 #ifdef DEBUG
-        printf("contour_area=%f\n", contour_area);
+//        printf("contour_area=%f\n", contour_area);
 #endif
     }
 
