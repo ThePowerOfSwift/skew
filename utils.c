@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <cv.h>
 #include <highgui.h>
+#include <leptonica/allheaders.h>
 
 int countDebugImages = 0;
 
@@ -181,4 +182,26 @@ IplImage *drawHistogram(CvHistogram *histogram, float scaleX, float scaleY)
     }
 
     return img;
+}
+
+PIX *IplImage2PIX(IplImage *src)
+{
+    IplImage *gray = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+    cvCvtColor(src, gray, CV_BGR2GRAY);
+    PIX *pixs = pixCreate(gray->width, gray->height, gray->depth);
+
+    for (int i = 0; i < gray->height; i++) {
+        uchar *ptr = (uchar*) (gray->imageData + i * gray->widthStep);
+        for (int j = 0; j < gray->width; j++) {
+            pixSetPixel(pixs, j, i, (l_uint32)ptr[j]);
+        }
+    }
+
+#ifdef DEBUG
+    pixDisplay(pixs, 20, 20);
+#endif
+
+    cvReleaseImage(&gray);
+
+    return pixs;
 }

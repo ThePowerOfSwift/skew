@@ -13,8 +13,14 @@
 
 #define TPL_2_NORMAL 2
 
-void templatesMatching(IplImage *src);
+CvRect templCrossCorrelation(IplImage *src, IplImage *templ, int type);
+
+IplImage *templCreateTempl(char *dir, char *files[], char *filename, int filesc);
+
+int templatesMatching2(IplImage *src, IplImage *templ1, IplImage *templ2);
 
 IplImage *templCreateTempl(char *dir, char *files[], char *filename, int filesc);
 
 IplImage *templGet(char *templ, char *files[], int filesc);
+
+void templCreateBinMask(IplImage *templ);
