@@ -73,7 +73,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     }
 
     memset(&box, 0, sizeof(CvBox2D));
-    if ((contorsFindBox(src, contours, &box)) != 0) {
+    if ((contorsFindBox(src, contours, storage, &box)) != 0) {
         perror("contoursFindBox: Box not found.");
         ret = 1;
         __EXIT__;
@@ -110,6 +110,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     } else {
         *dst = cvCloneImage(crop);
     }
+    cvReleaseImage(&crop);
 
     __END__;
 
@@ -117,7 +118,6 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     cvReleaseImage(&t1);
     cvReleaseImage(&rgb);
     cvReleaseImage(&bin);
-    cvReleaseImage(&crop);
     cvReleaseMemStorage(&storage);
 
     return ret;
@@ -145,7 +145,7 @@ int contoursGet(IplImage *src, CvMemStorage* storage, CvSeq **contours)
    return ret;
 }
 
-int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
+int contorsFindBox(IplImage *src, CvSeq *contours, CvMemStorage* storage, CvBox2D *box)
 {
     CvBox2D b;
     double area;
@@ -168,12 +168,14 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
 #endif
 
     for (CvSeq *c = contours; c != NULL; c = c->h_next) {
+        c = cvApproxPoly(c, sizeof(CvContour), storage, CV_POLY_APPROX_DP, 5, 1);
         double contour_area = fabs(cvContourArea(c, CV_WHOLE_SEQ, 0));
         double ratio = area / contour_area;
 
         if (ratio > 1.5 && ratio < 6.0) {
             b = cvMinAreaRect2(c, NULL);
             memcpy(box, &b, sizeof(CvBox2D));
+
 //#ifdef DEBUG
 //            CvPoint2D32f points[4];
 //            cvBoxPoints(box, points);
@@ -187,7 +189,7 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvBox2D *box)
 //            SKEW_DRAW_LINE(_src, px, py, b.center.x, b.center.y);
 //            CvRect rect = cvRect(cvRound(px), cvRound(py), b.size.width, b.size.height);
 //            cvRectangleR(_src, rect, cvScalar(0, 0, 255, 0), 2, 8, 0);
-//            debug(_src, "contorsGetRect", "Contours");
+//            debug(_src, "contorsGetRect", "Contours", NULL);
 //            cvReleaseImage(&_src);
 #endif
             ret = 0;

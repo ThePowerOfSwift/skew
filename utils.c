@@ -121,11 +121,11 @@ void debug_run()
             cvNamedWindow(img->titleHist[1], CV_WINDOW_NORMAL);
             cvShowImage(img->titleHist[1], hist->r);
 
-//            cvNamedWindow(img->titleHist[2], CV_WINDOW_NORMAL);
-//            cvShowImage(img->titleHist[2], hist->r);
+            cvNamedWindow(img->titleHist[2], CV_WINDOW_NORMAL);
+            cvShowImage(img->titleHist[2], hist->r);
 
-//            cvNamedWindow(img->titleHist[3], CV_WINDOW_NORMAL);
-//            cvShowImage(img->titleHist[3], hist->r);
+            cvNamedWindow(img->titleHist[3], CV_WINDOW_NORMAL);
+            cvShowImage(img->titleHist[3], hist->r);
 
             img->hist = hist;
 
@@ -198,9 +198,8 @@ PIX *IplImage2PIX(IplImage *src)
     }
 
 #ifdef DEBUG
-    pixDisplay(pixs, 20, 20);
+//    pixDisplay(pixs, 20, 20);
 #endif
-
     cvReleaseImage(&gray);
 
     return pixs;

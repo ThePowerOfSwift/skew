@@ -1,5 +1,7 @@
 #include <cv.h>
 
+//#define TEXT 1
+
 #define __BEGIN__ __CV_BEGIN__
 #define __END__  __CV_END__
 #define __EXIT__ __CV_EXIT__
@@ -15,7 +17,7 @@
 
 #define DEBUG_IMAGENAME_SEPARATOR ":"
 
-#define DEBUG_OUTPUT_FILE_EXTENTION ".jpg"
+#define DEBUG_OUTPUT_FILE_EXTENTION ".png"
 
 #define DEBUG_HIST_WINDOW_TITLE "Hist"
 
@@ -24,6 +26,7 @@
 #define DEBUG_HIST_WINDOW_TITLE_GREEN "green"
 
 #define DEBUG_HIST_WINDOW_TITLE_BLUE "blue"
+
 
 #define MORPH(src, dst, operation, radius, iterations) {                                 \
     int  cols = radius * 2 + 1,                                                          \
