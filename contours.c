@@ -29,7 +29,8 @@ CvRect contoursGetRect(CvBox2D *box)
 
 int contoursGetOutline(IplImage *src, IplImage **dst)
 {
-    IplImage *t3, *t1, *rgb, *bin, *crop, *rotated;
+    IplImage *bin, *gray, *mask, *res, *temp, *mop, *crop, *rotated;
+    IplConvKernel *element;
     CvMemStorage *storage;
     CvSeq *contours;
     CvBox2D box;
@@ -42,31 +43,54 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     CV_CALL( storage = cvCreateMemStorage(0) );
 
     bin = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
-    rgb = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
-    t3  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
-    t1  = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
 
-    contoursDrawBorder(src);
+    gray = cvCreateImage(cvGetSize(src), src->depth, 1);
+    bin  = cvCreateImage(cvGetSize(src), src->depth, 1);
+    mask = cvCreateImage(cvGetSize(src), src->depth, 1);
+    res = cvCreateImage(cvGetSize(src), src->depth, 1);
+    temp = cvCreateImage(cvGetSize(src), src->depth, 1);
+    mop = cvCreateImage(cvGetSize(src), src->depth, 1);
 
-    cvCvtColor(src, bin, CV_RGB2GRAY);
-    cvAdaptiveThreshold(bin, t1, 250, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
+    cvCvtColor(src, gray, CV_RGB2GRAY);
+    cvAdaptiveThreshold(gray, bin, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
 
-    cvCvtColor(t1, rgb, CV_GRAY2RGB);
-    MORPH(rgb, t3, CV_MOP_OPEN, 3, 1);
+    cvThreshold(gray, mask, 0, 255, CV_THRESH_BINARY_INV + CV_THRESH_OTSU);
+    cvReleaseImage(&gray);
 
-    cvCvtColor(t3, bin, CV_RGB2GRAY);
-    cvThreshold(bin, t1, 195, 255, CV_THRESH_BINARY);
+    cvOr(bin, mask, res, NULL);
+    cvReleaseImage(&mask);
+    cvReleaseImage(&bin);
 
-    cvCvtColor(t1, rgb, CV_GRAY2RGB);
-    MORPH(rgb, t3, CV_MOP_CLOSE, 9, 1);
+    int radius = 3;
+    int cols = radius * 2 + 1;
+    int rows = cols;
+    element = cvCreateStructuringElementEx(cols, rows, radius, radius, CV_SHAPE_ELLIPSE, NULL);
+    cvMorphologyEx(res, mop, temp, element, CV_MOP_OPEN, 1);
+    cvReleaseStructuringElement(&element);
 
-    cvCvtColor(t3, bin, CV_RGB2GRAY);
+    radius = 9;
+    cols = radius * 2 + 1;
+    rows = cols;
+    element = cvCreateStructuringElementEx(cols, rows, radius, radius, CV_SHAPE_ELLIPSE, NULL);
+    cvMorphologyEx(mop, mop, temp, element, CV_MOP_CLOSE, 1);
+    cvReleaseStructuringElement(&element);
+
+    radius = 7;
+    cols = radius * 2 + 1;
+    rows = cols;
+    element = cvCreateStructuringElementEx(cols, rows, radius, radius, CV_SHAPE_ELLIPSE, NULL);
+    cvErode(mop, mop, element, 1);
+    cvDilate(mop, mop, element, 1);
+    cvReleaseStructuringElement(&element);
+    cvReleaseImage(&temp);
+
+    contoursDrawBorder(mop);
 
 #ifdef DEBUG
 //    debug(bin, "Binary", "Contours");
 #endif
 
-    if ((ret = contoursGet(bin, storage, &contours)) <= 0) {
+    if ((ret = contoursGet(mop, storage, &contours)) <= 0) {
         perror("contoursGet: Contours not found.");
         ret = 1;
         __EXIT__;
@@ -114,9 +138,9 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
 
     __END__;
 
-    cvReleaseImage(&t3);
-    cvReleaseImage(&t1);
-    cvReleaseImage(&rgb);
+
+    cvReleaseImage(&res);
+    cvReleaseImage(&mop);
     cvReleaseImage(&bin);
     cvReleaseMemStorage(&storage);
 
@@ -176,11 +200,6 @@ int contorsFindBox(IplImage *src, CvSeq *contours, CvMemStorage* storage, CvBox2
             b = cvMinAreaRect2(c, NULL);
             memcpy(box, &b, sizeof(CvBox2D));
 
-//#ifdef DEBUG
-//            CvPoint2D32f points[4];
-//            cvBoxPoints(box, points);
-//            skewDrawRect(src, points);
-//#endif
 
 #ifdef DEBUG
 //            double px = b.center.x - (b.size.width / 2);

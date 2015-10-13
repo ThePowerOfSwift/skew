@@ -22,45 +22,113 @@ CvRect *textGetPhoto(IplImage *src, int clear)
     cvErode(photo, photo, element, 1);
     cvReleaseStructuringElement(&element);
 
-#ifdef DEBUG
-    debug(photo, "photo", "text", NULL);
-#endif
 
-    int x = 0, y = 0;
-    int maxX = src->width / 2;
-    int maxY = src->height - cvRound(src->height * 0.1);
-    int offset = 100;
 
-    for (int i = src->height / 2; i < maxY; i++) {
+    int *fx = calloc(photo->width / 2, sizeof(int));
+    for (int j = photo->width / 2, max = photo->height / 2; j > 0; j--) {
+        for (int i = photo->height -1; i > max; i--) {
         ptr = (uchar*) (photo->imageData + i * photo->widthStep);
-        for (int j = offset; j < maxX; j++) {
             if (ptr[j] == 0x00) {
-                if (j >= x) {
-                    x = j;
-                }
-                if (j < (x - 100)) {
-                    y = i;
-                }
+                fx[j]++;
             }
         }
     }
 
-    maxY = y;
-    maxX = x;
-    int minY = src->height / 2;
+    int maxval = 0;
+    int minval = photo->height / 2;
+    for (int i = photo->width / 2 - 1; i > 0; i--) {
+        printf("x = %d %d\n", i, fx[i]);
+        maxval = CV_IMAX(maxval, fx[i]);
+        minval = CV_IMIN(minval, fx[i]);
+   }
 
-    for (int j = maxX; j > offset; j--) {
-        for (int i = maxY; i > minY; i--) {
-            ptr = (uchar *)(photo->imageData + i * photo->widthStep);
+   int dx = 5;
+   int minlocx;
+   int maxlocx;
+   for (int i = photo->width / 2 - 1; i > 0; i--) {
+       if (fx[i] == maxval) {
+           for (int j = 0, left = i; j < dx; j++, left--) {
+               if (left <= 0) break;
+               if (fx[left] > minval) {
+                   minlocx = left;
+                   j = 0;
+               }
+           }
+
+           for (int j = 0, right = i; j < dx; j++, right++) {
+               if (right >= photo->width / 2 -1) break;
+               if (fx[right] > minval) {
+                   maxlocx = right;
+                   j = 0;
+               }
+           }
+           break;
+       }
+   }
+
+    printf("max: %d\n", maxval);
+    printf("minloc: %d\n", minlocx);
+    printf("maxloc: %d\n", maxlocx);
+
+    int *fy = calloc(photo->height, sizeof(int));
+    for (int i = photo->height -1, max = photo->height / 2; i > max; i--) {
+        ptr = (uchar*) (photo->imageData + i * photo->widthStep);
+        for (int j = maxlocx; j > minlocx; j--) {
             if (ptr[j] == 0x00) {
-                if (i < y) {
-                    y = i;
-                }
+                fy[i]++;
             }
         }
     }
 
-    CvRect rect = cvRect(0, y, maxX, maxY - y);
+    maxval = 0;
+    minval = photo->height / 2;
+    for (int i = photo->height -1, max = photo->height / 2; i > max; i--) {
+        printf("y = %d %d\n", i, fy[i]);
+        maxval = CV_IMAX(maxval, fy[i]);
+//        minval = CV_IMIN(min, fy[i]);
+    }
+
+    printf("max: %d\n", maxval);
+    printf("minloc: %d\n", minlocx);
+    printf("maxloc: %d\n", maxlocx);
+
+//    int x = 0, y = 0;
+//    int maxX = src->width / 2;
+//    int maxY = src->height - cvRound(src->height * 0.1);
+//    int offset = 100;
+
+//    for (int i = src->height / 2; i < maxY; i++) {
+//        ptr = (uchar*) (photo->imageData + i * photo->widthStep);
+//        for (int j = offset; j < maxX; j++) {
+//            if (ptr[j] == 0x00) {
+//                if (j >= x) {
+//                    x = j;
+//                }
+//                if (j < (x - 100)) {
+//                    y = i;
+//                }
+//            }
+//        }
+//    }
+
+//    maxY = y;
+//    maxX = x;
+//    int minY = src->height / 2;
+
+//    for (int j = maxX; j > offset; j--) {
+//        for (int i = maxY; i > minY; i--) {
+//            ptr = (uchar *)(photo->imageData + i * photo->widthStep);
+//            if (ptr[j] == 0x00) {
+//                if (i < y) {
+//                    y = i;
+//                }
+//            }
+//        }
+//    }
+
+//    CvRect rect = cvRect(0, y, maxX, maxY - y);
+
+    CvRect rect = cvRect(0, 1, 1, 1);
 
     if (clear != NULL) {
         cvRectangleR(src, rect, cvScalar(255, 255, 255, 0), CV_FILLED, 8, 0);
@@ -70,13 +138,47 @@ CvRect *textGetPhoto(IplImage *src, int clear)
     IplImage *rgb = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
     cvCvtColor(src, rgb, CV_GRAY2BGR);
     cvRectangleR(rgb, rect, cvScalar(0, 0, 255, 0), 1, 8, 0);
+    cvLine(photo, cvPoint(minlocx, rgb->height / 2), cvPoint(maxlocx, rgb->height / 2), cvScalar(0, 0, 255, 0), 2, 8, 0);
     debug(rgb, "photoRect", "text", NULL);
     cvReleaseImage(&rgb);
 #endif
-
+#ifdef DEBUG
+    debug(photo, "photo", "text", NULL);
+#endif
     cvReleaseImage(&photo);
 
     return &rect;
+}
+
+
+void textDrawLines2(IplImage *src, IplImage *debug)
+{
+    uchar *ptr;
+    int dx = 30;
+
+    for (int x = src->width -1; x > 0; x--) {
+        for (int y = src->height -1; y > 0; y--) {
+            ptr = (uchar*) (src->imageData + y * src->widthStep);
+            if (ptr[x] == 0x00) {
+                int lwidth = 0;
+                for (int j = 0; j < dx; j++) {
+                    int lx = x + lwidth + j;
+                    if (lx >= src->width) break;
+                    if (ptr[lx] == 0x00) {
+                        lwidth += j;
+                        j = 0;
+                    }
+                }
+                if (lwidth != 0) {
+#ifdef DEBUG
+                    if (debug != NULL)
+                        cvLine(debug, cvPoint(x, y), cvPoint(x + lwidth, y), cvScalar(0, 0, 255, 0), 1, 8, 0);
+#endif
+                    cvLine(src, cvPoint(x, y), cvPoint(x + lwidth, y), cvScalar(0, 0, 0, 0), 1, 8, 0);
+                }
+            }
+        }
+    }
 }
 
 void textDrawLines(IplImage *src)
@@ -102,13 +204,6 @@ void textDrawLines(IplImage *src)
                 line_x = x;
                 line_width = 0;
                 ptr = (uchar*) (src->imageData + y * src->widthStep);
-//                for (line_width = 0; ptr[line_x - line_width] == 0x00; line_width++) {};
-
-//                if (line_width >= max_width) {
-//                    for (int i = 0; i < line_width; i++) {
-//                        ptr[line_x - i] == (float)0xff;
-//                    }
-//                }
 
                 for (int j = 0; j < dx; j++) {
                     if (ptr[line_x--] == 0x00) {
@@ -242,6 +337,203 @@ int _textStringsCmpYCallback(const void *a, const void *b)
     return CV_CMP(ra->y, rb->y);
 }
 
+void textTest(IplImage *src)
+{
+    IplConvKernel *element;
+    IplImage *bin, *filtered, *lines;
+
+    CvMemStorage* storage = cvCreateMemStorage(0);
+    CvSeq *contours;
+
+
+    filtered = cvCreateImage(cvGetSize(src), src->depth, src->nChannels);
+    bin = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+//    lines = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+
+
+    float data[] = {-0.1, 0.2, -0.1,
+                     0.2,  1,   0.2,
+                    -0.1, 0.2, -0.1};
+
+    CvMat kernel = cvMat(3, 3, CV_32FC1, data);
+    cvFilter2D(src, filtered, &kernel, cvPoint(-1, -1));
+
+#ifdef DEBUG
+    debug(filtered, "filtered", "text", NULL);
+#endif
+
+    cvCvtColor(filtered, bin, CV_BGR2GRAY);
+    cvThreshold(bin, bin, 0, 255, CV_THRESH_BINARY + CV_THRESH_OTSU);
+
+#ifdef DEBUG
+    debug(bin, "bin", "text", NULL);
+#endif
+
+    lines = cvCloneImage(bin);
+    textDrawLines2(lines, NULL);
+
+#ifdef DEBUG
+    debug(lines, "linesDrawed", "text", NULL);
+#endif
+
+    element = cvCreateStructuringElementEx(2, 11, 1, 5, CV_SHAPE_ELLIPSE, NULL);
+    cvDilate(lines, lines, element, 1);
+    cvReleaseStructuringElement(&element);
+
+#ifdef DEBUG
+    debug(lines, "linesResult", "text", NULL);
+#endif
+
+    cvFindContours(lines, storage, &contours, sizeof(CvContour), CV_RETR_LIST, CV_CHAIN_APPROX_NONE, cvPoint(0, 0));
+
+    int contours_size = 0;
+    for (CvSeq *c = contours; c != NULL; c = c->h_next)contours_size++;
+    CvRect *strings = calloc(contours_size, sizeof(CvRect));
+
+    int strings_size = 0;
+    uchar *ptr;
+
+    for (CvSeq *c = contours; c != NULL; c = c->h_next) {
+        CvRect rect = cvBoundingRect(c, 0);
+        memcpy(&strings[strings_size++], &rect, sizeof(CvRect));
+    }
+
+    qsort(strings, strings_size, sizeof(CvRect), _textStringsCmpXCallback);
+    qsort(strings, strings_size, sizeof(CvRect), _textStringsCmpYCallback);
+
+    CvRect line = strings[strings_size - 1];
+    CvRect line2 = strings[strings_size - 2];
+
+    for (int i = strings_size; i > 0; i--) {
+        CvRect rect = strings[i];
+
+        if (rect.height < line.height / 2) continue;
+        if (rect.height > line.height * 2) continue;
+
+        for (int y = rect.y; y > 0; y--) {
+            ptr = (uchar*) (bin->imageData + y * bin->widthStep);
+            uchar pix;
+            for (int x = rect.x, max = rect.x + rect.width; x < max ;x++) {
+                pix = ptr[x];
+                if (pix == 0x00) {
+                    rect.y--;
+                    rect.height++;
+                    break;
+                }
+            }
+            if (pix != 0x00) break;
+        }
+
+        for (int y = rect.y + rect.height; y < bin->height; y++) {
+            ptr = (uchar*) (bin->imageData + y * bin->widthStep);
+            uchar pix;
+            for (int x = rect.x, max = rect.x + rect.width; x < max; x++) {
+                pix = ptr[x];
+                if (pix == 0x00) {
+                    rect.height++;
+                    break;
+                }
+            }
+            if (pix != 0x00) break;
+        }
+
+        for (int y = rect.y, max = rect.y + rect.height; y < max; y++) {
+            ptr = (uchar*) (bin->imageData + y * bin->widthStep);
+            for (int x = rect.x - 1; ptr[x] == 0x00; x--) {
+                rect.x--;
+                rect.width++;
+            }
+        }
+
+        for (int y = rect.y, max = rect.y + rect.height; y < max; y++) {
+            ptr = (uchar *) (bin->imageData + y * bin->widthStep);
+            for (int x = rect.x + rect.width; ptr[x] == 0x00; x++) {
+                rect.width++;
+            }
+        }
+
+        printf("s%d: x = %d y = %d\n", i, rect.x, rect.y);
+
+        cvRectangleR(src, rect, cvScalar(0, 0, 255, 0), 1, 8, 0);
+    }
+
+#ifdef DEBUG
+    debug(src, "src", "text", NULL);
+#endif
+
+    free(strings);
+
+    cvReleaseImage(&bin);
+    cvReleaseImage(&lines);
+    cvReleaseImage(&filtered);
+}
+
+void _testMorp(IplImage *src)
+{
+    IplConvKernel *element;
+    IplImage *bin, *gray, *filtered, *lines;
+
+    CvMemStorage* storage = cvCreateMemStorage(0);
+    CvSeq *contours;
+
+    filtered = cvCreateImage(cvGetSize(src), src->depth, src->nChannels);
+    bin = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+    gray = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+    lines = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 1);
+
+    float data[] = {-0.1, 0.2, -0.1,
+                     0.2,  1,   0.2,
+                    -0.1, 0.2, -0.1};
+
+    CvMat kernel = cvMat(3, 3, CV_32FC1, data);
+    cvFilter2D(src, filtered, &kernel, cvPoint(-1, -1));
+
+//#ifdef DEBUG
+//    debug(filtered, "filtered", "text", NULL);
+//#endif
+
+    cvCvtColor(src, gray, CV_BGR2GRAY);
+    cvThreshold(gray, bin, 0, 255, CV_THRESH_BINARY + CV_THRESH_OTSU);
+    cvReleaseImage(&gray);
+
+#ifdef DEBUG
+    debug(bin, "bin", "text", NULL);
+#endif
+
+    CvRect *photo = textGetPhoto(bin, 1);
+
+    element = cvCreateStructuringElementEx(2, 7, 1, 5, CV_SHAPE_ELLIPSE, NULL);
+    cvDilate(bin, lines, element, 1);
+    cvReleaseStructuringElement(&element);
+
+
+#ifdef DEBUG
+    IplImage *d = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
+    cvCvtColor(bin, d, CV_GRAY2BGR);
+#endif
+
+    textDrawLines2(bin, d);
+
+#ifdef DEBUG
+    debug(d, "binLines", "text", NULL);
+    cvZero(d);
+#endif
+
+    textDrawLines2(lines, d);
+
+#ifdef DEBUG
+    debug(d, "dilateLines", "text", NULL);
+#endif
+
+
+#ifdef DEBUG
+    cvReleaseImage(&d);
+#endif
+
+    cvReleaseImage(&filtered);
+    cvReleaseImage(&bin);
+    cvReleaseImage(&lines);
+}
 
 void testMorp(IplImage *src)
 {
@@ -270,21 +562,20 @@ void testMorp(IplImage *src)
 #endif
 
     cvCvtColor(filtered, bin, CV_BGR2GRAY);
-    cvThreshold(bin, t1, 0, 255, CV_THRESH_BINARY + CV_THRESH_OTSU);
-    cvReleaseImage(&bin);
-    bin = t1;
-
+    cvThreshold(bin, bin, 0, 255, CV_THRESH_BINARY + CV_THRESH_OTSU);
 
 #ifdef DEBUG
     debug(bin, "bin", "text", NULL);
 #endif
     CvRect *photo = textGetPhoto(bin, 1);
 
+    textDrawLines2(bin, NULL);
+
     element = cvCreateStructuringElementEx(2, 11, 1, 5, CV_SHAPE_ELLIPSE, NULL);
     cvDilate(bin, lines, element, 1);
     cvReleaseStructuringElement(&element);
 
-    textDrawLines(lines);
+//    textDrawLines(bin);
 
 #ifdef DEBUG
     debug(lines, "lines2", "text", NULL);
@@ -353,7 +644,6 @@ void testMorp(IplImage *src)
                 }
             }
 
-
 //            rect.y -= pad;
 //            rect.x -= pad;
 //            rect.width += pad * 2;
@@ -399,6 +689,8 @@ void testMorp(IplImage *src)
             }
         }
     }
+
+    cvCvtColor(bin, src, CV_GRAY2BGR);
 
     for (int i = 0; i < sc; i++) {
         cvRectangleR(src, sieve[i], cvScalar(0, 0, 255, 0), 1, 8, 0);

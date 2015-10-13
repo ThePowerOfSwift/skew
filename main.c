@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
               textGetResult(rotated, handle);
 #else
 //              textGetResult(rotated, NULL);
-              testMorp(rotated);
+              textTest(rotated);
 #endif
 
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
               textGetResult(rotated, handle);
 #else
 //              textGetResult(rotated, NULL);
-            testMorp(rotated);
+            textTest(rotated);
 #endif
 //            strcat(filepath, filename);
 //            textGetResult(rotated);
