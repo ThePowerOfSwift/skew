@@ -87,7 +87,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     contoursDrawBorder(mop);
 
 #ifdef DEBUG
-//    debug(bin, "Binary", "Contours");
+    debug(mop, "Binary", "Contours", NULL);
 #endif
 
     if ((ret = contoursGet(mop, storage, &contours)) <= 0) {
@@ -106,7 +106,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     rotated = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
     skewRotate(src, rotated, box.center, box.angle);
 #ifdef DEBUG
-//    debug(rotated, "rotated", "contours", NULL);
+    debug(rotated, "rotated", "contours", NULL);
 #endif
 
     CvRect rect = contoursGetRect(&box);
@@ -116,7 +116,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     cvResetImageROI(rotated);
 
 #ifdef DEBUG
-//    debug(crop, "Crop", "Contour");
+    debug(crop, "Crop", "Contour", NULL);
 #endif
 
     // delete this before refactor contoursGetRect()
@@ -127,7 +127,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
         cvFlip(rotated, rotated, 1);
 
 #ifdef DEBUG
-//        debug(rotated, "Rotated", "contours");
+        debug(rotated, "Rotated", "contours", NULL);
 #endif
         *dst = cvCloneImage(rotated);
         cvReleaseImage(&rotated);

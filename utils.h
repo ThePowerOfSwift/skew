@@ -1,4 +1,6 @@
 #include <cv.h>
+#include <leptonica/allheaders.h>
+#include <tesseract/capi.h>
 
 //#define TEXT 1
 
@@ -62,3 +64,9 @@ void debug(IplImage *src, char *imageName, char *moduleName, int drawHist);
 void debug_run();
 
 IplImage *drawHistogram(CvHistogram *histogram, float scaleX, float scaleY);
+
+void reverse(char s[]);
+
+void itoa(int n, char s[]);
+
+PIX *IplImage2PIX(IplImage *src);
