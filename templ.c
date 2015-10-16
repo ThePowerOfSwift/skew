@@ -164,10 +164,10 @@ int templateValidate(IplImage *src, IplImage *templ1, IplImage *templ2)
     CvRect r2 = templCrossCorrelation(src, templ2, 1);
 
 #ifdef DEBUG
-    cvRectangleR(src, r1, CV_RGB(255, 0, 0), 1, 8, 0);
-    cvRectangleR(src, r2, CV_RGB(0, 255, 0), 1, 8, 0);
-    cvLine(src, cvPoint(src->width / 2, 0), cvPoint(src->width / 2, src->height), CV_RGB(0, 0, 255), 1, 8, 0);
-    cvLine(src, cvPoint(0, src->height / 2), cvPoint(src->width, src->height / 2), CV_RGB(0, 0, 255), 1, 8, 0);
+//    cvRectangleR(src, r1, CV_RGB(255, 0, 0), 1, 8, 0);
+//    cvRectangleR(src, r2, CV_RGB(0, 255, 0), 1, 8, 0);
+//    cvLine(src, cvPoint(src->width / 2, 0), cvPoint(src->width / 2, src->height), CV_RGB(0, 0, 255), 1, 8, 0);
+//    cvLine(src, cvPoint(0, src->height / 2), cvPoint(src->width, src->height / 2), CV_RGB(0, 0, 255), 1, 8, 0);
 #endif
 
     int min_y = src->height / 2 - r1.height / 2;
@@ -207,9 +207,9 @@ int templatesMatching2(IplImage *src, IplImage *templ1, IplImage *templ2)
     }
 
 #ifdef DEBUG
-    debug(src, "src", "templ", NULL);
-    debug(templ1, "templ1", "templ", NULL);
-    debug(templ2, "templ2", "templ", NULL);
+//    debug(src, "src", "templ", NULL);
+//    debug(templ1, "templ1", "templ", NULL);
+//    debug(templ2, "templ2", "templ", NULL);
 #endif
 
     return ret;

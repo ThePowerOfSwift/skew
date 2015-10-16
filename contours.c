@@ -54,7 +54,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     cvCvtColor(src, gray, CV_RGB2GRAY);
     cvAdaptiveThreshold(gray, bin, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 7, 1);
 
-    cvThreshold(gray, mask, 0, 255, CV_THRESH_BINARY_INV + CV_THRESH_OTSU);
+    cvThreshold(gray, mask, 0, 128, CV_THRESH_BINARY_INV + CV_THRESH_OTSU);
     cvReleaseImage(&gray);
 
     cvOr(bin, mask, res, NULL);
@@ -87,7 +87,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     contoursDrawBorder(mop);
 
 #ifdef DEBUG
-    debug(mop, "Binary", "Contours", NULL);
+//    debug(mop, "Binary", "Contours", NULL);
 #endif
 
     if ((ret = contoursGet(mop, storage, &contours)) <= 0) {
@@ -106,7 +106,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     rotated = cvCreateImage(cvGetSize(src), IPL_DEPTH_8U, 3);
     skewRotate(src, rotated, box.center, box.angle);
 #ifdef DEBUG
-    debug(rotated, "rotated", "contours", NULL);
+//    debug(rotated, "rotated", "contours", NULL);
 #endif
 
     CvRect rect = contoursGetRect(&box);
@@ -116,7 +116,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
     cvResetImageROI(rotated);
 
 #ifdef DEBUG
-    debug(crop, "Crop", "Contour", NULL);
+//    debug(crop, "Crop", "Contour", NULL);
 #endif
 
     // delete this before refactor contoursGetRect()
@@ -127,7 +127,7 @@ int contoursGetOutline(IplImage *src, IplImage **dst)
         cvFlip(rotated, rotated, 1);
 
 #ifdef DEBUG
-        debug(rotated, "Rotated", "contours", NULL);
+//        debug(rotated, "Rotated", "contours", NULL);
 #endif
         *dst = cvCloneImage(rotated);
         cvReleaseImage(&rotated);

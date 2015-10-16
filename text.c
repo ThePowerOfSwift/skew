@@ -177,7 +177,7 @@ void textDrawLines3(IplImage *src, int lheight)
                         }
                         i = y+1;
                         pix = (uchar *)(src->imageData + i * src->widthStep);
-                        for (; pix[j] == 0x00; i++) {
+                        for (; i < src->height && pix[j] == 0x00; i++) {
                             pix = (uchar *)(src->imageData + i * src->widthStep);
                             h++;
                             height = CV_IMAX(height, h);
@@ -188,23 +188,25 @@ void textDrawLines3(IplImage *src, int lheight)
                         for (j = width + x; j > x; j--) {
                             int i = y;
                             pix = (uchar *)(src->imageData + i * src->widthStep);
-                            int h = 0;
+//                            int h = 0;
                             for (; pix[j] == 0x00; i--) {
-                                pix = (uchar *)(src->imageData + i * src->widthStep);
-                                h++;
-                                height = CV_IMAX(height, h);
+//                                pix = (uchar *)(src->imageData + i * src->widthStep);
+//                                h++;
+//                                height = CV_IMAX(height, h);
+                                pix[j] = 0xff;
                             }
                             i = y+1;
                             pix = (uchar *)(src->imageData + i * src->widthStep);
-                            for (; pix[j] == 0x00; i++) {
+                            for (; i < src->height && pix[j] == 0x00; i++) {
                                 pix = (uchar *)(src->imageData + i * src->widthStep);
-                                h++;
-                                y++;
-                                height = CV_IMAX(height, h);
+//                                h++;
+//                                y++;
+//                                height = CV_IMAX(height, h);
+                                pix[j] = 0xff;
                             }
                         }
-                        cvRectangleR(rgb, cvRect(x, y-height, width, height), cvScalar(0, 0, 255, 0), CV_FILLED, 8, 0);
-                        cvRectangleR(src, cvRect(x, y-height, width, height), cvScalar(255, 255, 255, 0), CV_FILLED, 8, 0);
+//                        cvRectangleR(rgb, cvRect(x, y-height, width, height), cvScalar(0, 0, 255, 0), CV_FILLED, 8, 0);
+//                        cvRectangleR(src, cvRect(x, y-height, width, height), cvScalar(255, 255, 255, 0), CV_FILLED, 8, 0);
                     }
                 }
             }
@@ -245,8 +247,8 @@ void textDrawLines2(IplImage *src)
     uchar *ptr;
     int dx = 30;
 
-    for (int x = src->width -1; x > 0; x--) {
-        for (int y = src->height -1; y > 0; y--) {
+    for (int x = src->width; x > 0; x--) {
+        for (int y = src->height; y > 0; y--) {
             ptr = (uchar*) (src->imageData + y * src->widthStep);
             if (ptr[x] == 0x00) {
                 int lwidth = 0;
@@ -320,8 +322,6 @@ void textTest(IplImage *src)
     lines = cvCloneImage(bin);
     textDrawLines2(lines);
 
-
-
 #ifdef DEBUG
     debug(lines, "linesDrawed", "text", NULL);
 #endif
@@ -330,6 +330,7 @@ void textTest(IplImage *src)
     cvDilate(lines, lines, element, 1);
     cvReleaseStructuringElement(&element);
     int lheight = textGetMaxLineHeight(lines, 0, 0 ,0 ,0);
+    textDrawLines3(lines, lheight);
     textDrawLines3(lines, lheight);
 
 #ifdef DEBUG
