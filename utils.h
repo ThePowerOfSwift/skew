@@ -70,3 +70,5 @@ void reverse(char s[]);
 void itoa(int n, char s[]);
 
 PIX *IplImage2PIX(IplImage *src);
+
+int intersectRect(CvRect r1, CvRect r2);

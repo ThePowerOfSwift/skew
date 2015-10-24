@@ -232,3 +232,9 @@ void itoa(int n, char s[])
     s[i] = '\0';
     reverse(s);
 }
+
+int intersectRect(CvRect r1, CvRect r2)
+{
+    return (CV_IMAX(r1.x, r2.x) <= CV_IMIN(r1.x + r1.width, r2.x + r2.width) && CV_IMAX(r1.y, r2.y) <= CV_IMIN(r1.y + r1.height, r2.y + r2.height));
+}
+

@@ -7,3 +7,9 @@
 
 
 void textGetResult(IplImage *src, TessBaseAPI *handle);
+
+int textCriteriaMinWidth(int width);
+
+int textCriteriaMinHeight(int height);
+
+int textCriteria(CvRect rect);
